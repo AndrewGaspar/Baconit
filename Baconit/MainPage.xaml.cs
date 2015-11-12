@@ -109,6 +109,9 @@ namespace Baconit
 
             // Set the subreddit list
             ui_subredditList.ItemsSource = m_subreddits;
+
+            // Setup hot keys for quick search
+            RegisterQuickSearchHotKey();
         }
 
         /// <summary>
@@ -154,6 +157,26 @@ namespace Baconit
         private void App_OnResuming(object sender, object e)
         {
             UpdateTrendingSubreddits();
+        }
+
+        /// <summary>
+        /// Called by the page manager when the menu should be opened.
+        /// </summary>
+        /// <param name="show">If it should be shown or hidden</param>
+        public void ToggleMenu(bool show)
+        {
+            ui_splitView.IsPaneOpen = show;
+        }
+
+        /// <summary>
+        /// Fired when the panel is closed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void SplitView_PaneClosed(SplitView sender, object args)
+        {
+            // Make sure all panels are closed.
+            CloseAllPanels();
         }
 
         #region UI Updates
@@ -324,10 +347,11 @@ namespace Baconit
         {
             CloseTrendingSubredditsPanelIfOpen();
             CloseAccoutPanelIfOpen();
+            ToggleQuickSearch(true);
 
-            if(closeMenu)
+            if (closeMenu)
             {
-                ui_splitView.IsPaneOpen = false;
+                ToggleMenu(false);
             }
         }
 
@@ -399,7 +423,7 @@ namespace Baconit
             else
             {
                 // Close the panel
-                CloseAllPanels(true);
+                ToggleMenu(false);
 
                 // Navigate
                 m_panelManager.Navigate(typeof(LoginPanel), "LoginPanel");
@@ -410,31 +434,104 @@ namespace Baconit
         {
             // Navigate to the inbox
             m_panelManager.Navigate(typeof(MessageInbox), "MessageInbox");
-            CloseAllPanels(true);
+            ToggleMenu(false);
         }
 
         private void SettingsGrid_Tapped(object sender, TappedRoutedEventArgs e)
         {
             // Navigate to the settings page.
             m_panelManager.Navigate(typeof(Settings), "Settings");
-            CloseAllPanels(true);
+            ToggleMenu(false);
         }
 
-        private void ExploreSubreddits_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            CloseAllPanels(true);
-        }
+        #endregion
 
-        private void AddOrRemoveSubreddits_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            CloseAllPanels(true);
-        }
+        #region Quick Search
 
         private void SearchHeader_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            m_panelManager.Navigate(typeof(Search), "Search");
-            CloseAllPanels(true);
+            // If the search box is empty close or open the box
+            if (String.IsNullOrWhiteSpace(ui_quickSearchBox.Text))
+            {
+                ToggleQuickSearch();
+            }
+            else
+            {
+                // We have search content, go to search.
+                m_panelManager.Navigate(typeof(Search), "Search");
+                CloseAllPanels(true);
+            }
         }
+
+        private void ToggleQuickSearch(bool forceClose = false)
+        {
+            bool shouldClose = forceClose || ui_quickSearchBox.Visibility == Visibility.Visible;
+
+            // Clear the text.
+            if (shouldClose)
+            {
+                ui_quickSearchBox.Text = "";
+            }
+
+            // Set the Grid columns
+            ui_quickSearchHeaderColumDef.Width = new GridLength(1, shouldClose ? GridUnitType.Star : GridUnitType.Auto);
+            ui_quickSearchTextBoxColumDef.Width = new GridLength(1, shouldClose ? GridUnitType.Auto : GridUnitType.Star);
+
+            // Set the visibility
+            ui_quickSearchBox.Visibility = shouldClose ? Visibility.Collapsed : Visibility.Visible;
+            ui_searchTextBlock.Visibility = shouldClose ? Visibility.Visible : Visibility.Collapsed;
+
+            // Focus the box
+            if (!shouldClose)
+            {
+                ui_quickSearchBox.Focus(FocusState.Keyboard);
+            }
+        }
+
+        private void QuickSearchBox_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if(e.Key == Windows.System.VirtualKey.Enter)
+            {
+                // Fake a tap, this will navigate us
+                SearchHeader_Tapped(null, null);
+            }
+
+        }
+
+        private void RegisterQuickSearchHotKey()
+        {
+            ui_mainHolder.KeyDown += MainHolder_KeyDown;
+            ui_mainHolder.KeyUp += MainHolder_KeyUp;
+            this.Focus(FocusState.Programmatic);
+        }
+
+        private bool m_isControlKeyDown = false;
+
+        private void MainHolder_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if(e.Key == Windows.System.VirtualKey.Control)
+            {
+                m_isControlKeyDown = true;
+            }
+        }
+
+        private void MainHolder_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if(e.Key == Windows.System.VirtualKey.Control)
+            {
+                m_isControlKeyDown = false;
+            }
+            else if(m_isControlKeyDown)
+            {
+                if(e.Key == Windows.System.VirtualKey.Q)
+                {
+                    // Open the panel and show the search box
+                    ToggleMenu(true);
+                    SearchHeader_Tapped(null, null);
+                    e.Handled = true;
+                }
+            }
+        }        
 
         #endregion
 
@@ -691,14 +788,5 @@ namespace Baconit
         }
 
         #endregion
-
-        /// <summary>
-        /// Called by the page manager when the menu should be opened.
-        /// </summary>
-        /// <param name="show">If it should be shown or hidden</param>
-        public void ToggleMenu(bool show)
-        {
-            ui_splitView.IsPaneOpen = show;
-        }
     }
 }

@@ -9,7 +9,9 @@
       mc:Ignorable="d">
 
     <Grid x:Name="ui_mainHolder" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <SplitView x:Name="ui_splitView" PaneBackground="#1F1F1F">
+        <SplitView x:Name="ui_splitView"
+                   PaneBackground="#1F1F1F"
+                   PaneClosed="SplitView_PaneClosed">
             <SplitView.Pane>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -104,27 +106,71 @@
                     <!--  Search Header  -->
                     <Grid x:Name="ui_searchHeader"
                           Grid.Row="7"
-                          Grid.ColumnSpan="2"
-                          Tapped="SearchHeader_Tapped">
+                          Grid.ColumnSpan="2">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition x:Name="ui_quickSearchTextBoxColumDef" Width="auto" />
+                            <ColumnDefinition x:Name="ui_quickSearchHeaderColumDef" Width="*" />
                         </Grid.ColumnDefinitions>
-                        <SymbolIcon Width="25"
-                                    Height="25"
-                                    Margin="8,8,12,8"
-                                    RenderTransformOrigin="0.5, 0.5"
-                                    Symbol="Find">
-                            <SymbolIcon.RenderTransform>
-                                <ScaleTransform ScaleX=".9" ScaleY=".9" />
-                            </SymbolIcon.RenderTransform>
-                        </SymbolIcon>
-                        <TextBlock Grid.Column="1"
-                                   Margin="0,0,0,3"
-                                   VerticalAlignment="Center"
-                                   FontSize="16"
-                                   Style="{ThemeResource TitleTextBlockStyle}"
-                                   Text="Search" />
+
+
+                        <Grid.Resources>
+                            <Storyboard x:Name="ui_storyQuickSearchSlide">
+                                <DoubleAnimation x:Name="ui_animQuickSearchTextBox"
+                                                 Duration="0:0:0.5"
+                                                 EnableDependentAnimation="True"
+                                                 Storyboard.TargetName="ui_quickSearchBox"
+                                                 Storyboard.TargetProperty="Width">
+                                    <DoubleAnimation.EasingFunction>
+                                        <ExponentialEase EasingMode="EaseOut" Exponent="7" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation x:Name="ui_animQuickSearchStaticText"
+                                                 Duration="0:0:0.5"
+                                                 EnableDependentAnimation="True"
+                                                 Storyboard.TargetName="ui_searchTextBlock"
+                                                 Storyboard.TargetProperty="Width">
+                                    <DoubleAnimation.EasingFunction>
+                                        <ExponentialEase EasingMode="EaseOut" Exponent="7" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </Grid.Resources>
+
+                        <!--  The inline quick search box  -->
+                        <TextBox x:Name="ui_quickSearchBox"
+                                 Grid.Column="0"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalContentAlignment="Center"
+                                 FontSize="16"
+                                 KeyUp="QuickSearchBox_KeyUp"
+                                 Padding="8,5,0,0"
+                                 PlaceholderText="Search Anything"
+                                 Visibility="Collapsed" />
+
+                        <!--  The actual search UI  -->
+                        <Grid Grid.Column="1" Tapped="SearchHeader_Tapped">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <SymbolIcon Grid.Column="0"
+                                        Width="25"
+                                        Height="25"
+                                        Margin="8,8,12,8"
+                                        RenderTransformOrigin="0.5, 0.5"
+                                        Symbol="Find">
+                                <SymbolIcon.RenderTransform>
+                                    <ScaleTransform ScaleX=".9" ScaleY=".9" />
+                                </SymbolIcon.RenderTransform>
+                            </SymbolIcon>
+                            <TextBlock x:Name="ui_searchTextBlock"
+                                       Grid.Column="1"
+                                       Margin="0,0,0,3"
+                                       VerticalAlignment="Center"
+                                       FontSize="16"
+                                       Style="{ThemeResource TitleTextBlockStyle}"
+                                       Text="Search" />
+                        </Grid>
                     </Grid>
 
                     <!--  Trending Subreddits Header  -->
